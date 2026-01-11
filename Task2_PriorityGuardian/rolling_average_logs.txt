@@ -1,0 +1,42 @@
+[MQTT] krillparadise/data/stream → 348.99
+[BACKGROUND] Avg = 432.84
+[BACKGROUND] Avg = 432.84
+[MQTT] krillparadise/data/stream → 829.97
+[BACKGROUND] Avg = 504.53
+[BACKGROUND] Avg = 504.53
+[MQTT] krillparadise/data/stream → 866.81
+[BACKGROUND] Avg = 511.86
+[MQTT] krillparadise/data/stream → 365.83
+[BACKGROUND] Avg = 531.89
+[BACKGROUND] Avg = 531.89
+[MQTT] swastiktheyeagerists → CHALLENGE
+[DISTRESS] 345166 → 345193 (Δ=27 ms)
+[MQTT] krillparadise/data/stream → 593.27
+[BACKGROUND] Avg = 533.19
+[BACKGROUND] Avg = 533.19
+[MQTT] krillparadise/data/stream → 732.51
+[BACKGROUND] Avg = 522.04
+[MQTT] swastiktheyeagerists → CHALLENGE
+[DISTRESS] 347189 → 347216 (Δ=27 ms)
+[MQTT] krillparadise/data/stream → 683.9
+[BACKGROUND] Avg = 548.88
+[BACKGROUND] Avg = 548.88
+[MQTT] krillparadise/data/stream → 739.33
+[BACKGROUND] Avg = 605.86
+[BACKGROUND] Avg = 605.86
+[MQTT] swastiktheyeagerists → CHALLENGE
+[MQTT] krillparadise/data/stream → 503.77
+[DISTRESS] 349232 → 349301 (Δ=69 ms)
+[BACKGROUND] Avg = 600.07
+[MQTT] swastiktheyeagerists → CHALLENGE
+[MQTT] krillparadise/data/stream → 595.71
+[DISTRESS] 350264 → 350291 (Δ=27 ms)
+[BACKGROUND] Avg = 626.01
+[BACKGROUND] Avg = 626.01
+[MQTT] swastiktheyeagerists → CHALLENGE
+[DISTRESS] 351086 → 351113 (Δ=27 ms)
+[MQTT] krillparadise/data/stream → 522.82
+[BACKGROUND] Avg = 643.39
+[BACKGROUND] Avg = 643.39
+[MQTT] krillparadise/data/stream → 553.94
+[BACKGROUND] Avg = 615.79
