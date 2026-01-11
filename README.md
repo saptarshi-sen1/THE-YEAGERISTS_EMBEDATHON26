@@ -30,6 +30,7 @@ All tasks use **MQTT communication, FreeRTOS scheduling, and OLED visual feedbac
 3. [Task 3: Window Synchronizer](#task-3-window-synchronizer)
 4. [Key Design Principles](#key-design-principles)
 5. [Timing Accuracy & LED Indicators](#timing-accuracy--led-indicators)
+6. [Architecture](#Architecture)
 6. [Video Links](#video-links)
 7. [Build Instructions](#build-instructions)
 8. [Collaborators Note](#collaborators-note)
@@ -207,15 +208,9 @@ if ((millis() - lastDebounce) > 20 && lastState == HIGH && current == LOW) {
 
 ---
 
-## ⚡ Summary
+## Architecture
 
-This project demonstrates:
-
-- **Advanced FreeRTOS scheduling**  
-- **MQTT message handling**  
-- **Real-time LED and button control**  
-- **Robust OLED feedback**  
-- **Precise timing for reef synchronization tasks**
+![System Architecture](https://raw.githubusercontent.com/saptarshi-sen1/THE-YEAGERISTS_EMBEDATHON26/main/docs/Architecture.png) 
 
 ---
 
