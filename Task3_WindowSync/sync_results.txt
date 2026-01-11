@@ -1,0 +1,208 @@
+#include <Arduino.h>
+#include <WiFi.h>
+#include <PubSubClient.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+/* ================= USER CONFIG ================= */
+#define WIFI_SSID   "Galaxy S23 FE B4B9"
+#define WIFI_PASS   "S23FEpersonal"
+
+#define MQTT_BROKER "broker.mqttdashboard.com"
+#define MQTT_PORT  1883
+
+/* 🔴 VERY IMPORTANT */
+#define WINDOW_CODE "PASTE_WINDOW_CODE_HERE"
+
+/* ================= HARDWARE ================= */
+#define RED_LED_PIN    25
+#define GREEN_LED_PIN  26
+#define BUTTON_PIN     32
+
+#define SCREEN_WIDTH   128
+#define SCREEN_HEIGHT  64
+#define OLED_ADDR      0x3C
+
+/* ================= GLOBALS ================= */
+WiFiClient espClient;
+PubSubClient mqttClient(espClient);
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
+/* Window + button timing */
+volatile bool windowOpen = false;
+volatile unsigned long windowOpenTime = 0;
+volatile unsigned long buttonPressTime = 0;
+volatile int syncCount = 0;
+
+/* ================= WIFI ================= */
+void connectWiFi() {
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\nWiFi connected");
+}
+
+/* ================= MQTT CALLBACK ================= */
+void mqttCallback(char* topic, byte* payload, unsigned int length) {
+  payload[length] = '\0';
+
+  String msg = String((char*)payload);
+  msg.trim();
+  msg.toUpperCase();
+
+  String top = String(topic);
+
+  if (top == WINDOW_CODE && msg.indexOf("OPEN") >= 0) {
+    windowOpen = true;
+    windowOpenTime = millis();
+
+    Serial.print("[WINDOW] OPEN @ ");
+    Serial.println(windowOpenTime);
+
+    // 🟢 Window open
+    digitalWrite(RED_LED_PIN, HIGH);
+    digitalWrite(GREEN_LED_PIN, LOW);
+
+    display.clearDisplay();
+    display.setCursor(0, 0);
+    display.println("TASK 3");
+    display.println("WINDOW OPEN");
+    display.display();
+  }
+}
+
+/* ================= MQTT CONNECT ================= */
+void connectMQTT() {
+  mqttClient.setServer(MQTT_BROKER, MQTT_PORT);
+  mqttClient.setCallback(mqttCallback);
+
+  while (!mqttClient.connected()) {
+    String clientId = "ESP32_T3_" + String((uint32_t)ESP.getEfuseMac(), HEX);
+    if (mqttClient.connect(clientId.c_str())) {
+      mqttClient.subscribe(WINDOW_CODE);
+      Serial.println("MQTT connected & subscribed");
+    } else {
+      delay(1000);
+    }
+  }
+}
+
+/* ================= MQTT TASK ================= */
+void mqttTask(void* pv) {
+  while (true) {
+    if (!mqttClient.connected()) connectMQTT();
+    mqttClient.loop();
+
+    // Auto-close window after 1100 ms
+    if (windowOpen && millis() - windowOpenTime > 1100) {
+      windowOpen = false;
+
+      Serial.println("[WINDOW] CLOSED");
+
+      digitalWrite(GREEN_LED_PIN, HIGH);
+      digitalWrite(RED_LED_PIN, LOW);
+
+      display.clearDisplay();
+      display.setCursor(0, 0);
+      display.println("TASK 3");
+      display.println("NO WINDOW");
+      display.display();
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(10));
+  }
+}
+
+/* ================= BUTTON TASK ================= */
+void buttonTask(void* pv) {
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+
+  bool lastState = HIGH;
+  unsigned long lastDebounce = 0;
+
+  while (true) {
+    bool current = digitalRead(BUTTON_PIN);
+
+    if (current != lastState) {
+      lastDebounce = millis();
+    }
+
+    if ((millis() - lastDebounce) > 20) {
+      if (lastState == HIGH && current == LOW) {
+        buttonPressTime = millis();
+
+        Serial.print("[BUTTON] Press @ ");
+        Serial.println(buttonPressTime);
+
+        // 🟢 Short blink
+        digitalWrite(GREEN_LED_PIN, LOW);
+        vTaskDelay(pdMS_TO_TICKS(50));
+        digitalWrite(GREEN_LED_PIN, HIGH);
+
+        if (windowOpen &&
+            abs((long)(buttonPressTime - windowOpenTime)) <= 50) {
+
+          syncCount++;
+
+          char payload[96];
+          snprintf(payload, sizeof(payload),
+            "{\"status\":\"synced\",\"timestamp_ms\":%lu}",
+            buttonPressTime);
+
+          mqttClient.publish("cagedmonkey/listener", payload);
+
+          Serial.print("[SYNC] SUCCESS #");
+          Serial.println(syncCount);
+
+          display.clearDisplay();
+          display.setCursor(0, 0);
+          display.println("TASK 3");
+          display.println("SYNC OK");
+          display.display();
+
+          // 🟢 Long blink for success
+          digitalWrite(GREEN_LED_PIN, LOW);
+          vTaskDelay(pdMS_TO_TICKS(300));
+          digitalWrite(GREEN_LED_PIN, HIGH);
+        }
+      }
+    }
+
+    lastState = current;
+    vTaskDelay(pdMS_TO_TICKS(5));
+  }
+}
+
+/* ================= SETUP ================= */
+void setup() {
+  Serial.begin(115200);
+
+  pinMode(RED_LED_PIN, OUTPUT);
+  pinMode(GREEN_LED_PIN, OUTPUT);
+
+  // Initial state: no window
+  digitalWrite(RED_LED_PIN, LOW);
+  digitalWrite(GREEN_LED_PIN, HIGH);
+
+  Wire.begin(21, 22);
+  display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR);
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.println("TASK 3");
+  display.println("WAITING...");
+  display.display();
+
+  connectWiFi();
+  connectMQTT();
+
+  xTaskCreatePinnedToCore(mqttTask, "MQTT", 4096, NULL, 2, NULL, 1);
+  xTaskCreatePinnedToCore(buttonTask, "BUTTON", 4096, NULL, 2, NULL, 0);
+}
+
+void loop() {}
